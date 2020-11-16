@@ -9,7 +9,7 @@ mq:
   destination: "bill-paid-events"
   missingQuoteDestination: "bill-paid-event-quote-not-found"
 contract-sapi:
-  host: ""
-  port: ""
-  protocol: ""
+  host: "contract-sapi.us-e2.cloudhub.io"
+  port: "80"
+  protocol: "HTTP"
   basePath: "/api/"
