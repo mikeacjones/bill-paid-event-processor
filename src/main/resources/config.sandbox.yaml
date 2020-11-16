@@ -2,14 +2,17 @@ anypoint:
   platform:
     autodiscovery: "16472743"
 snowflake:
-  database: "CAMBIUM"
+  database: "CAMBIUM_DEV"
   table: "BILL_PAID_JOBS"
   warehouse: "CAMBIUM"
 mq:
   destination: "bill-paid-events"
+<<<<<<< HEAD
   missingQuoteDestination: "bill-paid-event-quote-not-found"
 contract-sapi:
   host: "localhost"
   port: "8081"
   protocol: "HTTP"
   basePath: "/api/"
+=======
+>>>>>>> 9a46997502e2df5facf6e7ad5e76ed83334a400a
