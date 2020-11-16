@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="billPaidEventSample" format="json">
+      <types:shape format="weave" example="examples/queueMessage.json"><![CDATA[%dw 2.0
+
+type billPaidEventSample = {|
+  eventData: {|
+    billId: Number {"typeId": "int"}, 
+    memberId: Number {"typeId": "int"}, 
+    organizationId: Number {"typeId": "int"}, 
+    customerSignedDate: String, 
+    startDate: String, 
+    endDate: String, 
+    contractTerm: String, 
+    billingStreet: String, 
+    billingCity: String, 
+    billingState: String, 
+    billingPostalCode: String, 
+    billingCountry: String, 
+    description: String, 
+    lineitems: Array<{|      billId: Number {"typeId": "int"},       lineitemId: Number {"typeId": "int"},       subscriptionId: Number {"typeId": "int"},       isKit: Boolean,       isComponent: Boolean,       tieredProductCode: String,       amountCharged: Number {"typeId": "double"},       listPrice: Number {"typeId": "double"},       renewalTermForecast: Number {"typeId": "double"},       activationDate: String,       expirationDate: String,       quantity: Number {"typeId": "int"},       subscriptionType: String,       expandType: String,       reportType: String,       "marketingCoupon?": String,       territoryGroupId: Number {"typeId": "int"},       finalExpirationDate: String,       currentUserLimit: Number {"typeId": "int"},       finalUserLimit: Number {"typeId": "int"}    |}>
+  |}, 
+  salesforceAccount: {|
+    OwnerId: String, 
+    Id: String, 
+    "type": String, 
+    Organization_ID__c: String, 
+    Name: String
+  |}
+|} {"example": "{\\\"eventData\\\":{\\\"billId\\\":8653265,\\\"memberId\\\":1645636,\\\"organizationId\\\":21164,\\\"customerSignedDate\\\":\\\"2020-10-20\\\",\\\"startDate\\\":\\\"2019-10-14\\\",\\\"endDate\\\":\\\"2020-11-12\\\",\\\"contractTerm\\\":\\\"12\\\",\\\"billingStreet\\\":\\\"54 Meadow St.\\\",\\\"billingCity\\\":\\\"New Haven\\\",\\\"billingState\\\":\\\"CT\\\",\\\"billingPostalCode\\\":\\\"06519\\\",\\\"billingCountry\\\":\\\"US\\\",\\\"description\\\":\\\"Test\\\",\\\"lineitems\\\":[{\\\"billId\\\":8608310,\\\"lineitemId\\\":10353338,\\\"subscriptionId\\\":3818398,\\\"isKit\\\":false,\\\"isComponent\\\":false,\\\"tieredProductCode\\\":\\\"RAZ-SCHOOL\\\",\\\"amountCharged\\\":1491.93,\\\"listPrice\\\":104.95,\\\"renewalTermForecast\\\":87.76,\\\"activationDate\\\":\\\"2020-10-07\\\",\\\"expirationDate\\\":\\\"2020-10-07\\\",\\\"quantity\\\":17,\\\"subscriptionType\\\":\\\"NEW\\\",\\\"expandType\\\":\\\"NONE\\\",\\\"reportType\\\":\\\"NEW\\\",\\\"marketingCoupon?\\\":\\\"IRAZPlus20\\\",\\\"territoryGroupId\\\":38,\\\"finalExpirationDate\\\":\\\"2021-10-07 00:00:00\\\",\\\"currentUserLimit\\\":17,\\\"finalUserLimit\\\":17}]},\\\"salesforceAccount\\\":{\\\"OwnerId\\\":\\\"005f3000004UaNeAAK\\\",\\\"Id\\\":\\\"00130000003Z1cRAAS\\\",\\\"type\\\":\\\"Account\\\",\\\"Organization_ID__c\\\":\\\"21164\\\",\\\"Name\\\":\\\"New Haven City School District\\\"}}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#2b54332f-e386-44e6-bb49-67b8161caa9e">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="billPaidEventSample"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#fc97a7fc-02e1-4184-a735-9da853bcd414">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="billPaidEventSample"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

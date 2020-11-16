@@ -7,3 +7,9 @@ snowflake:
   warehouse: "CAMBIUM"
 mq:
   destination: "bill-paid-events"
+  missingQuoteDestination: "bill-paid-event-quote-not-found"
+contract-sapi:
+  host: ""
+  port: ""
+  protocol: ""
+  basePath: "/api/"
