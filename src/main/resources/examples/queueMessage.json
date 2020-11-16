@@ -1,0 +1,48 @@
+{
+  "eventData": {
+    "billId": 8653265,
+    "memberId": 1645636,
+    "organizationId": 21164,
+    "customerSignedDate": "2020-10-20",
+    "startDate": "2019-10-14",
+    "endDate": "2020-11-12",
+    "contractTerm": "12",
+    "billingStreet": "54 Meadow St.",
+    "billingCity": "New Haven",
+    "billingState": "CT",
+    "billingPostalCode": "06519",
+    "billingCountry": "US",
+    "description": "Test",
+    "lineitems": [
+      {
+        "billId": 8608310,
+        "lineitemId": 10353338,
+        "subscriptionId": 3818398,
+        "isKit": false,
+        "isComponent": false,
+        "tieredProductCode": "RAZ-SCHOOL",
+        "amountCharged": 1491.93,
+        "listPrice": 104.95,
+        "renewalTermForecast": 87.76,
+        "activationDate": "2020-10-07",
+        "expirationDate": "2020-10-07",
+        "quantity": 17,
+        "subscriptionType": "NEW",
+        "expandType": "NONE",
+        "reportType": "NEW",
+        "marketingCoupon?": "IRAZPlus20",
+        "territoryGroupId": 38,
+        "finalExpirationDate": "2021-10-07 00:00:00",
+        "currentUserLimit": 17,
+        "finalUserLimit": 17
+      }
+    ]
+  },
+  "salesforceAccount": {
+    "OwnerId": "005f3000004UaNeAAK",
+    "Id": "00130000003Z1cRAAS",
+    "type": "Account",
+    "Organization_ID__c": "21164",
+    "Name": "New Haven City School District"
+  }
+}

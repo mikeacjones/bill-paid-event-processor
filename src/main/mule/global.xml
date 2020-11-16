@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+<mule
+	xmlns:system-api-contracts="http://www.mulesoft.org/schema/mule/system-api-contracts"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/system-api-contracts http://www.mulesoft.org/schema/mule/system-api-contracts/current/mule-system-api-contracts.xsd">
+	<anypoint-mq:config name="Anypoint_MQ_Config" doc:name="Anypoint MQ Config" doc:id="4c34826a-798b-4c5c-ad8c-4c923fb9be80" >
+		<anypoint-mq:connection clientId="${secure::mq.client_id}" clientSecret="${secure::mq.client_secret}" />
+	</anypoint-mq:config>
+	<global-property doc:name="Global Property" doc:id="10053a13-df1d-4e20-a723-27696289becb" name="environment" value="localDev" />
+	<configuration-properties doc:name="Configuration properties" doc:id="73e91d5b-b297-4bc9-8a49-dbf93d43ad41" file="config.${environment}.yaml" />
+	<secure-properties:config
+		name="Secure_Properties_Config" doc:name="Secure Properties Config"
+		doc:id="f339a6e5-5c9f-45c3-af6b-65cd41660d83"
+		file="config.secure.${environment}.yaml" key="${securePropertiesKey}">
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="60753093-d80f-4bc5-b605-3a77edcdad21">
+    	<db:generic-connection url="jdbc:snowflake://${secure::snowflake.accountName}.us-east-2.aws.snowflakecomputing.com?db=${snowflake.database}&amp;warehouse=${snowflake.warehouse}&amp;schema=PUBLIC" driverClassName="net.snowflake.client.jdbc.SnowflakeDriver" user="${secure::snowflake.username}" password="${secure::snowflake.password}" />
+	</db:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="8f1bd0f0-beed-441f-8390-f091a8d1fff9">
+		<salesforce:basic-connection username="${secure::cpq.username}" password="${secure::cpq.password}" securityToken="${secure::cpq.token}" url="https://learninga-z--devfull.my.salesforce.com/services/Soap/u/50.0" />
+	</salesforce:sfdc-config>
+	<system-api-contracts:config name="System_API___Contracts_Config" doc:name="System API - Contracts Config" doc:id="1c69e84c-6425-4cc6-83e3-f54b7e311672" property_host="${contract-sapi.host}" property_port="${contract-sapi.port}" property_protocol="${contract-sapi.protocol}" property_basePath="${contract-sapi.basePath}" property_responseTimeout="9999999"/>
+</mule>

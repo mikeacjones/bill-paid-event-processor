@@ -1,5 +1,109 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+<mule xmlns:system-api-contracts="http://www.mulesoft.org/schema/mule/system-api-contracts" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/system-api-contracts http://www.mulesoft.org/schema/mule/system-api-contracts/current/mule-system-api-contracts.xsd">
+	<flow name="bill-paid-event-processorFlow" doc:id="514b7dad-6584-486f-971a-6dad0b7dda8e" >
+		<anypoint-mq:subscriber doc:name="subscribe to bill paid events" doc:id="2b54332f-e386-44e6-bb49-67b8161caa9e" config-ref="Anypoint_MQ_Config" destination="${mq.destination}"/>
+		<set-variable value="#[payload]" doc:name="preserve original payload" doc:id="717ffabc-11b0-4281-a691-4365f42adede" variableName="originalPayload"/>
+		<flow-ref doc:name="create-contract" doc:id="a5864042-6aa1-40f4-9f77-a3bdf6099dac" name="create-contract" target="createContractResult"/>
+		<ee:transform doc:name="TODO: Implement LazSubscriptions" doc:id="de4fde5e-e8f2-4128-b4f2-5aba09af0cc9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="cb68ba06-8fbe-4218-af53-b9c0e9347ddd" >
+			<when expression="#[payload.eventData.billId != null]">
+				<salesforce:query doc:name="grab QuoteDocument" doc:id="c9fd5a82-25f4-4eee-a062-7da237f94e28" config-ref="Salesforce_Config" target="quoteDocument">
+					<salesforce:salesforce-query ><![CDATA[SELECT Id, SBQQ__Quote__c, CSI_Bill_Id__c
+FROM SBQQ__QuoteDocument__c
+WHERE CSI_Bill_Id__c = ':billId'
+LIMIT 1]]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"billId" : payload.eventData.billId
+}]]]></salesforce:parameters>
+				</salesforce:query>
+				<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="82093a46-eee4-43d2-aece-b615d8c17333" values="#[vars.quoteDocument]"/>
+				<salesforce:query doc:name="grab Quote" doc:id="9580605d-6d00-4052-947a-ac0f6d5785d9" config-ref="Salesforce_Config" target="quote">
+					<salesforce:salesforce-query ><![CDATA[SELECT Id, SBQQ__Opportunity2__c, SBQQ__Primary__c, Payment_Applied__c, SBQQ__Opportunity2__r.SBQQ__AmendedContract__c
+FROM SBQQ__Quote__c
+WHERE Id = ':quoteId'
+LIMIT 1]]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"quoteId" : vars.quoteDocument.SBQQ__Quote__c
+}]]]></salesforce:parameters>
+				</salesforce:query>
+				<validation:is-not-empty-collection doc:name="Is not empty collection" doc:id="3ef24cbe-12c9-4fcb-a096-e74b771d1440" values="#[vars.quote]"/>
+				<salesforce:upsert objectType="SBQQ__Quote__c" externalIdFieldName="OSCPQ_External_Id__c" doc:name="upsert Quote" doc:id="66bcc4be-b7d8-4ecc-b3df-7254410a9ace" config-ref="Salesforce_Config">
+					<salesforce:records ><![CDATA[#[{
+	(vars.quote - "Payment_Applied__c" - "Payment_Bill_Id__c"),
+	Payment_Applied__c: true,
+	Payment_Bill_Id__c: true
+}]]]></salesforce:records>
+				</salesforce:upsert>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="5014eaa9-3f3c-4414-9eda-4c66d7470406" type="APP:BAD_INPUT"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8a07eab1-6ae6-4212-aacd-58f038094e2d" type="SALESFORCE:INVALID_INPUT, VALIDATION:EMPTY_COLLECTION">
+				<anypoint-mq:publish doc:name="send to missing quote worker" doc:id="5a9cdb34-01c7-41a3-9283-dc05e8e2fda1" config-ref="Anypoint_MQ_Config" destination="${mq.missingQuoteDestination}">
+					<anypoint-mq:body ><![CDATA[#[vars.originalPayload]]]></anypoint-mq:body>
+				</anypoint-mq:publish>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<sub-flow name="create-contract" doc:id="fc97a7fc-02e1-4184-a735-9da853bcd414" >
+		<salesforce:query doc:name="find-contact" doc:id="b1f45519-1179-409b-b89f-22968de7ea21" config-ref="Salesforce_Config" target="contact">
+			<salesforce:salesforce-query ><![CDATA[SELECT Id FROM Contact WHERE Member_ID__c = ':memberId' LIMIT 1]]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[{
+	memberId: payload.eventData.memberId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<validation:is-not-empty-collection doc:id="b2536368-1dbe-498a-81f3-84aeb87e76ae" doc:name="validate contact found" values="#[vars.contact]" message='#["No Contact with member id $(payload.eventData.memberId) was found."]'>
+			<error-mapping sourceType="VALIDATION:EMPTY_COLLECTION" targetType="APP:BAD_INPUT" />
+		</validation:is-not-empty-collection>
+		<set-variable value="#[vars.contact[0]]" doc:name="set contact to contact[0]" doc:id="7caa0724-96ee-4d10-a986-e84c8bde33b5" variableName="contact"/>
+		<ee:transform doc:name="Transform Message" doc:id="5c3d4065-ad02-48bc-8e2f-23acd5d89f7e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	CustomerSignedDate: payload.eventData.customerSignedDate,
+	LicenseCoordinatorId: vars.contact.Id default "",
+	RenewalOwnerId: payload.salesforceAccount.OwnerId,
+	AccountId: payload.salesforceAccount.Id,
+	Description: payload.eventData.description,
+	BillingCity: payload.eventData.billingCity,
+	BillingCountryCode: payload.eventData.billingCountry,
+	AmendmentOwnerId: payload.salesforceAccount.OwnerId,
+	ContactId: vars.contact.Id default "",
+	ContractTerm: payload.eventData.contractTerm as Number,
+	EndDate: payload.eventData.endDate,
+	BillingContactId: vars.contact.Id default "",
+	StartDate: payload.eventData.startDate,
+	BillingStreet: payload.eventData.billingStreet,
+	BillingStateCode: payload.eventData.billingState,
+	BillId: payload.eventData.billId as String,
+	BillingPostalCode: payload.eventData.billingPostalCode,
+	DoNotRenewOrAmend: max([1,max(payload.eventData.lineitems.quantity)]) == 1
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<system-api-contracts:create-contract doc:name="Create contract" doc:id="0634aaca-fb72-4cac-9e1b-9c55e99295b2" config-ref="System_API___Contracts_Config"/>
+	</sub-flow>
+</mule>
